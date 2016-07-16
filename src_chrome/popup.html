@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
+        font-size: 100%;
+      }
+      
+      form {
+        display: inline-flex;
+      }
+      
+      #slider {
+        width: 20em;
+      }
+
+      #slider-value {
+        min-width: 2.4em;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <input id="slider" type="range"  min="0" max="50" value="20" step="1"/>
+      <output id="slider-value" for="slider">20%</output>
+    </form>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
