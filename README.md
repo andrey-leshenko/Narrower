@@ -3,6 +3,8 @@
 Narrower is a simple Chrome extension for dealing with annoyingly wide websites.
 To add margins to a page, click on the extension icon and drag the slider.
 
+You can install it from the Chrome Web Store [here](https://chrome.google.com/webstore/detail/narrower/jfjaedekncgddegockpigkkpgkhaoljg).
+
 ## Examples
 
 Unstyled html pages often have very long lines that are hard to read.
