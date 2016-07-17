@@ -22,7 +22,6 @@
         "activeTab"
     ],
 
-    // This makes the popup open faster
     "background": {
         "page": "empty.html"
     }
