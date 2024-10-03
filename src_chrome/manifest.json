@@ -1,5 +1,5 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "Narrower",
     "description": "Add margins to wide pages.",
     "version": "1.0",
@@ -10,7 +10,7 @@
         "48": "images/icon48.png",
         "128": "images/icon128.png" },
 
-    "browser_action": {
+    "action": {
         "default_icon": {
             "19": "images/popup_icon19.png",
             "38": "images/popup_icon38.png"
@@ -19,10 +19,7 @@
     },
 
     "permissions": [
-        "activeTab"
-    ],
-
-    "background": {
-        "page": "empty.html"
-    }
+        "activeTab",
+        "scripting"
+    ]
 }
