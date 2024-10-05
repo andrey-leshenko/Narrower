@@ -36,49 +36,53 @@ chrome.tabs.onRemoved.addListener(tabRemovedListener);
 // 
 // Since Service Workers can be killed and later recreated,
 // we can't rely on global vars and use chrome.storage instead.
+// To avoid data races when setting the storage, we use a cache of the storage
+// dict. This works correctly as long as calls to chrome.storage.session.set are
+// executed in FIFO order.
 
-async function activeTabsGet() {
-    let result = await chrome.storage.session.get(['activeTabs']);
-    return result['activeTabs'] || {};
-}
+let store = { activeTabs: {} };
 
-async function activeTabsSet(activeTabs) {
-    await chrome.storage.session.set({'activeTabs': activeTabs});
+let initStore = chrome.storage.session.get().then((items) => {
+    Object.assign(store, items);
+});
+
+async function saveStore() {
+    await chrome.storage.session.set(store);
 }
 
 async function activeTabsAdd(tabId, padding) {
-    let activeTabs = await activeTabsGet();
+    await initStore;
 
-    if (Object.keys(activeTabs).length == 0) {
+    if (Object.keys(store.activeTabs).length == 0) {
         chrome.tabs.onUpdated.addListener(tabUpdatedListener);
         chrome.tabs.onRemoved.addListener(tabRemovedListener);
     }
 
-    activeTabs[tabId] = padding;
-    activeTabsSet(activeTabs);
+    store.activeTabs[tabId] = padding;
+    await saveStore;
 }
 
 async function activeTabsRemove(tabId) {
-    let activeTabs = await activeTabsGet();
+    await initStore;
 
-    if (!(tabId in activeTabs))
+    if (!(tabId in store.activeTabs))
         return;
 
-    delete activeTabs[tabId];
-    activeTabsSet(activeTabs);
+    delete store.activeTabs[tabId];
+    await saveStore;
 }
 
 async function tabUpdatedListener(tabId, changeInfo, tab) {
-    let activeTabs = await activeTabsGet();
+    await initStore;
 
-    if (Object.keys(activeTabs).length == 0) {
+    if (Object.keys(store.activeTabs).length == 0) {
         // Don't waste CPU time if we don't have activeTabs
         chrome.tabs.onUpdated.removeListener(tabUpdatedListener);
         chrome.tabs.onRemoved.removeListener(tabRemovedListener);
         return;
     }
 
-    if (!(tabId in activeTabs))
+    if (!(tabId in store.activeTabs))
         return;
     if (changeInfo.status != 'loading')
         return;
@@ -87,7 +91,7 @@ async function tabUpdatedListener(tabId, changeInfo, tab) {
     // set it again. Setting it as early as possible stops most of the flickering.
     badgeOn(tabId);
 
-    setPadding(tabId, activeTabs[tabId])
+    setPadding(tabId, store.activeTabs[tabId])
         .catch((error) => {
             activeTabsRemove(tabId)
             badgeOff(tabId);
