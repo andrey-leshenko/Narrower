@@ -18,8 +18,14 @@
         "default_popup": "popup.html"
     },
 
+    "background": {
+        "service_worker": "service_worker.js",
+        "type": "module"
+    },
+
     "permissions": [
         "activeTab",
-        "scripting"
+        "scripting",
+        "storage"
     ]
 }

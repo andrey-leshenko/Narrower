@@ -1,53 +1,20 @@
-var DEFAULT_PADDING = 20;
+let DEFAULT_PADDING = 20;
 
-var slider = document.getElementById('slider');
-var sliderLabel = document.getElementById('slider-value');
+let slider = document.getElementById('slider');
+let sliderLabel = document.getElementById('slider-value');
 
-var currTabId = (await chrome.tabs.query({active: true, currentWindow: true}))[0].id;
+let currTabId = (await chrome.tabs.query({active: true, currentWindow: true}))[0].id;
 
 slider.addEventListener('input', function() {
-    chrome.scripting.executeScript({
-        target: {tabId: currTabId},
-        func: remote_setHorizontalMargin,
-        args: [this.value]
-    });
     sliderLabel.textContent = this.value * 2 + '%';
+    chrome.runtime.sendMessage({type: 'setPadding', value: this.value, tabId: currTabId});
 });
 
 slider.addEventListener('change', function() {
-    chrome.scripting.executeScript({
-        target: {tabId: currTabId},
-        func: remote_setSavedPadding,
-        args: [this.value]
-    });
+    chrome.runtime.sendMessage({type: 'setSavedPadding', value: this.value, tabId: currTabId});
 });
 
-var savedPadding = await getSavedPadding();
-var startPadding =  isNaN(parseInt(savedPadding)) ? DEFAULT_PADDING : savedPadding;
+let savedPadding = await chrome.runtime.sendMessage({type: 'getSavedPadding', tabId: currTabId});
+let startPadding =  isNaN(parseInt(savedPadding)) ? DEFAULT_PADDING : savedPadding;
 slider.value = startPadding;
 slider.dispatchEvent(new Event('input'));
-
-// Local functions
-
-async function getSavedPadding() {
-    var results = await chrome.scripting.executeScript({
-        target: {tabId: currTabId},
-        func: remote_getSavedPadding,
-    });
-    return results[0].result;
-}
-
-// Remote functions
-
-function remote_setHorizontalMargin(value) {
-    document.documentElement.style.paddingLeft = value.toString() + '%';
-    document.documentElement.style.paddingRight = value.toString() + '%';
-}
-
-function remote_getSavedPadding() {
-    return localStorage.getItem('narrowerExtention_pagePadding');
-}
-
-function remote_setSavedPadding(value) {
-    localStorage.setItem('narrowerExtention_pagePadding', value);
-}
