@@ -40,18 +40,23 @@ chrome.tabs.onRemoved.addListener(tabRemovedListener);
 // dict. This works correctly as long as calls to chrome.storage.session.set are
 // executed in FIFO order.
 
-let store = { activeTabs: {} };
+let getStore = (() => {
+    let store = { activeTabs: {} };
+    let initStore = chrome.storage.session.get().then((items) => {
+        Object.assign(store, items);
+    });
+    return async () => {
+        await initStore;
+        return store;
+    }
+})();
 
-let initStore = chrome.storage.session.get().then((items) => {
-    Object.assign(store, items);
-});
-
-async function saveStore() {
+async function saveStore(store) {
     await chrome.storage.session.set(store);
 }
 
 async function activeTabsAdd(tabId, padding) {
-    await initStore;
+    let store = await getStore();
 
     if (Object.keys(store.activeTabs).length == 0) {
         chrome.tabs.onUpdated.addListener(tabUpdatedListener);
@@ -59,21 +64,21 @@ async function activeTabsAdd(tabId, padding) {
     }
 
     store.activeTabs[tabId] = padding;
-    await saveStore;
+    await saveStore(store);
 }
 
 async function activeTabsRemove(tabId) {
-    await initStore;
+    let store = await getStore();
 
     if (!(tabId in store.activeTabs))
         return;
 
     delete store.activeTabs[tabId];
-    await saveStore;
+    await saveStore(store);
 }
 
 async function tabUpdatedListener(tabId, changeInfo, tab) {
-    await initStore;
+    let store = await getStore();
 
     if (Object.keys(store.activeTabs).length == 0) {
         // Don't waste CPU time if we don't have activeTabs
@@ -91,11 +96,13 @@ async function tabUpdatedListener(tabId, changeInfo, tab) {
     // set it again. Setting it as early as possible stops most of the flickering.
     badgeOn(tabId);
 
-    setPadding(tabId, store.activeTabs[tabId])
-        .catch((error) => {
-            activeTabsRemove(tabId)
-            badgeOff(tabId);
-        });
+    try {
+        await setPadding(tabId, store.activeTabs[tabId]);
+    }
+    catch (error) {
+        activeTabsRemove(tabId);
+        badgeOff(tabId);
+    }
 }
 
 async function tabRemovedListener(tabId, changeInfo) {
