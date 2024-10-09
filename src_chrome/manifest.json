@@ -2,16 +2,20 @@
     "manifest_version": 3,
     "name": "Narrower",
     "description": "Add margins to wide pages.",
-    "version": "1.0",
+    "version": "1.1",
     "author": "Andrey Leshenko",
 
     "icons": {
         "16": "images/icon16.png",
+        "32": "images/icon32.png",
         "48": "images/icon48.png",
         "128": "images/icon128.png" },
 
     "action": {
         "default_icon": {
+            "16": "images/icon16.png",
+            "24": "images/icon24.png",
+            "32": "images/icon32.png",
             "19": "images/popup_icon19.png",
             "38": "images/popup_icon38.png"
         },
